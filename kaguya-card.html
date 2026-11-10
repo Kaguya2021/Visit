@@ -1,216 +1,475 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>KAGUYA — Digital Experience</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#020617;--navy:#030B24;--royal:#075BFF;--electric:#1677FF;--gold:#E8C49B;--white:#fff;
---serif:'Cormorant Garamond','Times New Roman',Georgia,serif;--sans:'Jost','Helvetica Neue',Arial,sans-serif;
-box-sizing:border-box;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-*,*::before,*::after{box-sizing:inherit}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
-html,body{margin:0;overflow-x:hidden;background:var(--bg);color:var(--white);font-family:var(--sans)}
-body{min-height:100%;background:radial-gradient(ellipse at 30% 20%,#06235e55,transparent 55%),radial-gradient(ellipse at 80% 90%,#075bff22,transparent 50%),linear-gradient(#020617,#030B24 60%,#020617)}
-#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
-.stage{position:relative;z-index:1;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:24px 16px;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
-.panel-open .stage{transform:translateX(-12vw)}
-.scene{width:min(88vw,640px);perspective:1400px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.shadow{position:relative;height:0}
-.shadow::after{content:"";position:absolute;left:8%;right:8%;top:24px;height:34px;background:radial-gradient(ellipse,#075BFF66,transparent 70%);filter:blur(12px)}
-.card{position:relative;width:100%;aspect-ratio:1.6;transform-style:preserve-3d;cursor:grab;container-type:inline-size;will-change:transform}
-.card.drag{cursor:grabbing}
-.face{position:absolute;inset:0;border-radius:4.2cqw;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden;
-background:radial-gradient(ellipse at 20% 30%,#0a2a7a 0%,#030B24 55%,#020617 100%);
-border:1px solid #1677FF99;box-shadow:0 0 0 1px #075BFF33,0 0 5cqw #075BFF66,inset 0 0 6cqw #075BFF33}
-.face.back{transform:rotateY(180deg)}
-.glare{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at var(--gx,30%) var(--gy,20%),#ffffff30,transparent 45%);mix-blend-mode:screen;z-index:5}
-.face::before{content:"";position:absolute;inset:2.2cqw;border:1px solid #E8C49B55;border-radius:2.8cqw;pointer-events:none;z-index:4}
-.art{position:absolute;inset:0;width:100%;height:100%}
-/* front */
-.logo{position:absolute;right:0;top:0;bottom:0;width:52%;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:3;padding-bottom:5cqw}
-.gold{background:linear-gradient(160deg,#fff4e0 0%,#E8C49B 40%,#b98a57 70%,#f3dcbc 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.K{font-family:var(--serif);font-weight:600;font-size:30cqw;line-height:.85;filter:drop-shadow(0 0 2cqw #e8c49b55)}
-.name{font-family:var(--serif);font-weight:600;font-size:7.6cqw;letter-spacing:1.6cqw;margin:1.2cqw 0 0 1.6cqw}
-.rule{display:flex;align-items:center;gap:1.4cqw;margin-top:2cqw;width:60%}
-.rule i{flex:1;height:1px;background:linear-gradient(90deg,transparent,#E8C49B)}
-.rule i:last-child{transform:scaleX(-1)}
-.rule svg{width:2.6cqw;height:2.6cqw;fill:#E8C49B}
-.tag{position:absolute;bottom:5.6cqw;right:0;width:52%;text-align:center;font-size:1.9cqw;letter-spacing:.9cqw;color:#E8C49B;padding-left:.9cqw}
-/* back */
-.bhead{position:absolute;top:7cqw;left:0;right:0;text-align:center;z-index:3}
-.bhead h1{margin:0;font-family:var(--serif);font-weight:600;font-size:8cqw;letter-spacing:1.6cqw;padding-left:1.6cqw}
-.bhead p{margin:1cqw 0 0;font-family:var(--serif);font-size:3.2cqw;letter-spacing:.35cqw;color:#E8C49B}
-.grid{position:absolute;left:8cqw;right:8cqw;bottom:7cqw;display:grid;grid-template-columns:1fr 1fr;gap:2.6cqw;z-index:6}
-.cbtn{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:2cqw;height:13.5cqw;padding:0 2.4cqw 0 2.6cqw;border-radius:2.6cqw;cursor:pointer;color:#E8C49B;
-background:linear-gradient(135deg,#075bff22,#03082455);border:1px solid #1677FFcc;box-shadow:0 0 2.2cqw #1677FF55,inset 0 0 2cqw #075BFF33;
-transition:transform .25s,box-shadow .3s,border-color .3s,color .3s;-webkit-tap-highlight-color:transparent}
-.cbtn svg{width:6cqw;height:6cqw;flex:none}
-.cbtn span{flex:1;font-size:3.5cqw;letter-spacing:.25cqw;font-weight:500}
-.cbtn .arr{width:3cqw;height:3cqw;flex:none;opacity:.8;transition:transform .25s}
-.cbtn:hover{border-color:#E8C49B;box-shadow:0 0 3.6cqw #E8C49Baa,inset 0 0 2cqw #E8C49B33;color:#fff3dd;transform:translateY(-.3cqw)}
-.cbtn:hover .arr{transform:translateX(.8cqw)}
-.cbtn:active{transform:scale(.95)}
-.cbtn:focus-visible,.ctl:focus-visible,.pbtn:focus-visible,.x:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.ctrls{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.ctl{all:unset;cursor:pointer;padding:12px 22px;border-radius:999px;border:1px solid #1677FF99;color:#E8C49B;font-size:13px;letter-spacing:2px;background:#03082499;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:.25s;min-height:44px;display:flex;align-items:center}
-.ctl:hover{border-color:#E8C49B;box-shadow:0 0 18px #E8C49B66}
-.ctl:active{transform:scale(.95)}
-.hint{font-size:12px;color:#8fa6d6;letter-spacing:.5px;text-align:center;margin-top:-10px}
-/* panel */
-.panel{position:fixed;z-index:20;top:50%;right:4vw;width:min(360px,92vw);transform:translate(40px,-50%);opacity:0;visibility:hidden;pointer-events:none;
-transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s,visibility 0s .55s;
-background:linear-gradient(160deg,#07184aee,#030B24f2);border:1px solid #1677FFaa;border-radius:22px;padding:28px 24px 24px;
-box-shadow:0 0 40px #075BFF55,inset 0 0 30px #075BFF22;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);text-align:center;max-height:90dvh;overflow-y:auto}
-.panel.show{transform:translate(0,-50%);opacity:1;visibility:visible;pointer-events:auto;transition:transform .55s cubic-bezier(.2,.8,.2,1),opacity .4s,visibility 0s}
-.x{all:unset;position:absolute;top:12px;right:12px;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer;color:#E8C49B;border:1px solid #E8C49B55;font-size:18px;transition:.25s}
-.x:hover{background:#E8C49B22;transform:rotate(90deg)}
-.bigic{width:76px;height:76px;margin:6px auto 14px;border-radius:50%;display:grid;place-items:center;border:1px solid #E8C49B88;box-shadow:0 0 28px #1677FF77;color:#E8C49B}
-.bigic svg{width:38px;height:38px}
-.panel h2{margin:0;font-family:var(--serif);font-size:30px;letter-spacing:3px;font-weight:600}
-.panel .sub{margin:6px 0 18px;font-size:14px;color:#a9bde8}
-.info{padding:14px;border-radius:14px;border:1px solid #1677FF77;background:#02061799;margin-bottom:16px;word-break:break-all}
-.info small{display:block;font-size:11px;letter-spacing:2px;color:#8fa6d6;margin-bottom:4px}
-.info b{font-weight:500;font-size:17px;color:#E8C49B}
-.prow{display:flex;gap:10px}
-.pbtn{all:unset;box-sizing:border-box;flex:1;min-height:46px;display:grid;place-items:center;cursor:pointer;border-radius:12px;font-size:12px;letter-spacing:1.5px;text-align:center;padding:0 8px;transition:.25s}
-.pbtn.c{border:1px solid #E8C49B88;color:#E8C49B}
-.pbtn.c:hover{background:#E8C49B22;box-shadow:0 0 18px #E8C49B55}
-.pbtn.o{background:linear-gradient(135deg,#075BFF,#1677FF);color:#fff;box-shadow:0 0 20px #075BFF88}
-.pbtn.o:hover{box-shadow:0 0 28px #1677FFcc;transform:translateY(-1px)}
-.pbtn:active{transform:scale(.96)}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;z-index:30;background:#E8C49B;color:#020617;padding:10px 20px;border-radius:999px;font-size:13px;letter-spacing:1px;transition:.35s;pointer-events:none}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-@media (max-width:820px){
- .panel-open .stage{transform:translateY(-14vh) scale(.86)}
- .panel{top:auto;bottom:0;right:0;left:0;width:100%;border-radius:22px 22px 0 0;transform:translateY(100%);padding-bottom:calc(24px + env(safe-area-inset-bottom,0px))}
- .panel.show{transform:translateY(0)}
-}
-@media (max-width:560px){.card{aspect-ratio:1.38}.scene{width:92vw}.bhead{top:6cqw}.grid{bottom:6cqw}.cbtn{height:15cqw}.cbtn span{font-size:4cqw}.cbtn svg{width:6.6cqw;height:6.6cqw}}
-@media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;animation:none!important}}
-</style>
-</head>
-<body>
-<canvas id="bg"></canvas>
-<main class="stage" id="stage">
- <div class="scene" id="scene">
-  <div class="card" id="card">
-   <section class="face front" aria-label="Front side">
-    <svg class="art" viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-     <defs><linearGradient id="wv" x1="0" x2="1"><stop offset="0" stop-color="#075BFF" stop-opacity=".1"/><stop offset=".5" stop-color="#1677FF"/><stop offset="1" stop-color="#075BFF" stop-opacity="0"/></linearGradient></defs>
-     <g fill="none" stroke="url(#wv)" stroke-width="1.1" opacity=".85">
-      <path d="M-10 250 C80 170 150 330 250 240 S330 200 340 210"/><path d="M-10 270 C90 190 160 350 260 260 S330 225 345 235"/>
-      <path d="M-10 290 C100 210 170 370 270 280 S335 250 350 262"/><path d="M-10 310 C110 230 180 390 280 300 S340 275 355 288"/>
-      <path d="M-10 210 C70 130 140 280 230 200 S300 160 320 170" opacity=".6"/><path d="M-10 330 C120 250 190 410 290 320 S345 300 360 314" opacity=".5"/>
-     </g>
-     <g stroke="#E8C49B" stroke-width=".8" fill="#E8C49B" opacity=".9">
-      <polyline fill="none" points="40,60 90,95 135,70 175,120 120,150"/><circle cx="40" cy="60" r="2.4"/><circle cx="90" cy="95" r="2"/><circle cx="135" cy="70" r="2.6"/><circle cx="175" cy="120" r="2"/><circle cx="120" cy="150" r="2.2"/>
-      <polyline fill="none" points="215,40 250,75 290,55"/><circle cx="215" cy="40" r="1.8"/><circle cx="250" cy="75" r="2.2"/><circle cx="290" cy="55" r="1.8"/>
-     </g>
-     <g fill="#fff"><circle cx="60" cy="180" r="1"/><circle cx="200" cy="170" r="1.2"/><circle cx="25" cy="120" r="1"/><circle cx="300" cy="120" r="1"/><circle cx="170" cy="30" r="1"/><circle cx="100" cy="220" r="1.2"/><circle cx="270" cy="150" r=".9"/></g>
-    </svg>
-    <div class="logo"><div class="K gold">K</div><div class="name gold">KAGUYA</div>
-     <div class="rule"><i></i><svg viewBox="0 0 24 24"><path d="M12 0l2.4 9.6L24 12l-9.6 2.4L12 24l-2.4-9.6L0 12l9.6-2.4z"/></svg><i></i></div></div>
-    <div class="tag">DIGITAL EXPERIENCE</div>
-    <div class="glare"></div>
-   </section>
-   <section class="face back" aria-label="Back side">
-    <svg class="art" viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-     <g fill="none" stroke="url(#wv)" stroke-width="1" opacity=".5"><path d="M-10 120 C150 40 250 200 400 110 S600 60 650 100"/><path d="M-10 140 C150 60 250 220 400 130 S600 80 650 120"/></g>
-     <g fill="#fff"><circle cx="40" cy="50" r="1"/><circle cx="600" cy="40" r="1.2"/><circle cx="560" cy="350" r="1"/><circle cx="70" cy="340" r="1"/><circle cx="320" cy="20" r=".9"/></g>
-    </svg>
-    <div class="bhead"><h1 class="gold">KAGUYA</h1><p>Digital Creator &amp; Developer</p></div>
-    <div class="grid" id="grid"></div>
-    <div class="glare"></div>
-   </section>
-  </div>
-  <div class="shadow"></div>
- </div>
- <div class="ctrls"><button class="ctl" id="flip">FLIP CARD ↻</button><button class="ctl" id="reset">RESET VIEW</button></div>
- <div class="hint">Drag the card to rotate it</div>
-</main>
+```react
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { 
+  RotateCw, 
+  RotateCcw, 
+  Copy, 
+  ExternalLink, 
+  X, 
+  Check, 
+  Sparkles, 
+  Compass, 
+  Send, 
+  Mail, 
+  MessageSquare, 
+  Radio, 
+  Layers,
+  Volume2,
+  VolumeX,
+  Share2
+} from 'lucide-react';
 
-<aside class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="pt" aria-hidden="true">
- <button class="x" id="close" aria-label="Close panel">✕</button>
- <div class="bigic" id="pic"></div>
- <h2 class="gold" id="pt"></h2><p class="sub" id="ps"></p>
- <div class="info"><small id="pl"></small><b id="pv"></b></div>
- <div class="prow"><button class="pbtn c" id="pcopy"></button><a class="pbtn o" id="popen" target="_blank" rel="noopener noreferrer"></a></div>
-</aside>
-<div class="toast" id="toast" role="status">Copied</div>
+// --- SERVICE DATA & CONTACT CONFIG ---
+const CONTACT_DATA = {
+  whatsapp: {
+    id: 'whatsapp',
+    title: 'CONNECT WITH ME',
+    subtitle: "Let's talk on WhatsApp",
+    val: '+996 700 214 091',
+    copyVal: '+996700214091',
+    actionText: 'OPEN WHATSAPP',
+    actionUrl: 'https://wa.me/996700214091',
+    accentColor: '#25D366',
+    glowColor: 'rgba(37, 211, 102, 0.4)',
+    badge: 'Instant Messaging',
+    icon: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={props.className || "w-6 h-6"}>
+        <path d="M12.012 2c-5.506 0-9.989 4.478-9.99 9.984a9.964 9.964 0 001.333 4.993L2 22l5.233-1.237a9.994 9.994 0 004.779 1.217h.004c5.505 0 9.988-4.478 9.989-9.985 0-2.669-1.038-5.176-2.925-7.062A9.925 9.925 0 0012.012 2zm.004 18.16h-.003a8.31 8.31 0 01-4.237-1.163l-.304-.18-3.149.745.748-3.08-.198-.315A8.293 8.293 0 013.68 11.98c0-4.593 3.738-8.33 8.336-8.33 2.225 0 4.315.867 5.889 2.442a8.286 8.286 0 012.438 5.892c-.002 4.595-3.74 8.332-8.327 8.336zm4.564-6.233c-.25-.125-1.478-.728-1.707-.811-.229-.084-.396-.125-.563.125-.166.25-.646.811-.791.978-.146.166-.292.187-.542.062a6.85 6.85 0 01-2.013-1.242 7.558 7.558 0 01-1.394-1.737c-.146-.25-.015-.386.11-.51.112-.112.25-.292.375-.438.125-.146.166-.25.25-.416.083-.166.042-.312-.021-.438-.063-.125-.563-1.354-.771-1.854-.204-.488-.412-.422-.563-.43h-.479c-.167 0-.438.063-.667.312-.229.25-.875.854-.875 2.083 0 1.229.896 2.417 1.021 2.583.125.167 1.764 2.694 4.274 3.778.597.257 1.063.41 1.427.526.6.19 1.146.163 1.577.099.48-.071 1.478-.604 1.687-1.187.208-.583.208-1.083.146-1.187-.063-.105-.229-.167-.479-.292z"/>
+      </svg>
+    )
+  },
+  gmail: {
+    id: 'gmail',
+    title: 'EMAIL CONTACT',
+    subtitle: 'Feel free to send me an email',
+    val: 'a1dana.bakdiraeva@gmail.com',
+    copyVal: 'a1dana.bakdiraeva@gmail.com',
+    actionText: 'SEND EMAIL',
+    actionUrl: 'mailto:a1dana.bakdiraeva@gmail.com',
+    accentColor: '#FF4343',
+    glowColor: 'rgba(255, 67, 67, 0.4)',
+    badge: 'Direct Mail',
+    icon: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={props.className || "w-6 h-6"}>
+        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+      </svg>
+    )
+  },
+  telegram: {
+    id: 'telegram',
+    title: 'TELEGRAM PROFILE',
+    subtitle: "Let's connect on Telegram",
+    val: '@kaguya2_0_',
+    copyVal: '@kaguya2_0_',
+    actionText: 'OPEN TELEGRAM',
+    actionUrl: 'https://t.me/kaguya2_0_',
+    accentColor: '#0088CC',
+    glowColor: 'rgba(0, 136, 204, 0.4)',
+    badge: 'Personal Account',
+    icon: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={props.className || "w-6 h-6"}>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+      </svg>
+    )
+  },
+  channel: {
+    id: 'channel',
+    title: 'OFFICIAL CHANNEL',
+    subtitle: 'Welcome to the KAGUYA community',
+    val: 'KAGUYA CHANNEL',
+    copyVal: 'https://t.me/kaguya_2_0_bots',
+    actionText: 'JOIN CHANNEL',
+    actionUrl: 'https://t.me/kaguya_2_0_bots',
+    accentColor: '#1677FF',
+    glowColor: 'rgba(22, 119, 255, 0.4)',
+    badge: 'Community & Projects',
+    icon: (props) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" className={props.className || "w-6 h-6"}>
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
+      </svg>
+    )
+  }
+};
 
-<script>
-const IC={
-wa:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21l1.6-4.6A8.7 8.7 0 1 1 8 19.6z"/><path d="M9 8.6c.2 2.9 2.6 5.7 6 6.4l1.2-1.4-2-1-.9.8c-1-.4-1.9-1.3-2.3-2.3l.8-.9-1-2z" fill="currentColor" stroke="none"/></svg>',
-gm:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M3 7l9 6.5L21 7"/></svg>',
-tg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M21.5 3.5L2.8 10.8l5.6 2.1 2 6.4 3.2-3.8 4.8 3.6z"/><path d="M8.4 12.9l10-6.6-7.9 8.8" /></svg>',
-ch:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10v4a1 1 0 0 0 1 1h3l8 4.5V4.5L7 9H4a1 1 0 0 0-1 1z"/><path d="M19 9.5a4 4 0 0 1 0 5"/><path d="M7 15l1.2 5h2.3L9.600 16.500"/></svg>',
-ar:'<svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>'};
-const D={
-wa:{n:'WhatsApp',t:'CONNECT WITH ME',s:'Let’s talk on WhatsApp.',l:'PHONE NUMBER',v:'+996 700 214 091',c:'COPY NUMBER',o:'OPEN WHATSAPP',h:'https://wa.me/996700214091'},
-gm:{n:'Gmail',t:'EMAIL CONTACT',s:'Feel free to send me an email.',l:'EMAIL',v:'a1dana.bakdiraeva@gmail.com',c:'COPY EMAIL',o:'SEND EMAIL',h:'mailto:a1dana.bakdiraeva@gmail.com'},
-tg:{n:'Telegram',t:'TELEGRAM PROFILE',s:'Let’s connect on Telegram.',l:'USERNAME',v:'@kaguya2_0_',c:'COPY USERNAME',o:'OPEN TELEGRAM',h:'https://t.me/kaguya2_0_'},
-ch:{n:'Channel',t:'OFFICIAL CHANNEL',s:'Welcome to the KAGUYA community.',l:'KAGUYA CHANNEL',v:'https://t.me/kaguya_2_0_bots',c:'COPY LINK',o:'JOIN CHANNEL',h:'https://t.me/kaguya_2_0_bots'}};
-const $=id=>document.getElementById(id);
-const grid=$('grid');
-Object.keys(D).forEach(k=>{const b=document.createElement('button');b.className='cbtn';b.dataset.k=k;b.innerHTML=IC[k]+'<span>'+D[k].n+'</span>'+IC.ar;grid.appendChild(b)});
+// --- MAIN REACT COMPONENT ---
+export default function App() {
+  // 3D Card orientation & flipping state
+  const [rotX, setRotX] = useState(-5);
+  const [rotY, setRotY] = useState(15);
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  // Interactive pointer highlight position (0..100 percentage)
+  const [glarePos, setGlarePos] = useState({ x: 50, y: 50 });
 
-/* panel */
-let cur=null,last=null;
-const panel=$('panel');
-function openP(k){const d=D[k];cur=k;
- $('pic').innerHTML=IC[k];$('pt').textContent=d.t;$('ps').textContent=d.s;$('pl').textContent=d.l;$('pv').textContent=d.v;
- $('pcopy').textContent=d.c;$('popen').textContent=d.o;$('popen').href=d.h;
- panel.classList.add('show');panel.setAttribute('aria-hidden','false');document.body.classList.add('panel-open');$('close').focus({preventScroll:true})}
-function closeP(){cur=null;panel.classList.remove('show');panel.setAttribute('aria-hidden','true');document.body.classList.remove('panel-open');if(last)last.focus({preventScroll:true})}
-grid.addEventListener('click',e=>{const b=e.target.closest('.cbtn');if(!b)return;last=b;cur===b.dataset.k?closeP():openP(b.dataset.k)});
-$('close').onclick=closeP;
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&cur)closeP()});
-let tt;function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),1600)}
-$('pcopy').onclick=async()=>{const v=D[cur].v;let ok=false;
- try{await navigator.clipboard.writeText(v);ok=true}catch(_){
-  const a=document.createElement('textarea');a.value=v;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{ok=document.execCommand('copy')}catch(_){}a.remove()}
- toast(ok?'Copied to clipboard':'Copy failed — select the text manually')};
+  // Modal / Side Panel state
+  const [activePanel, setActivePanel] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
-/* 3D card */
-const card=$('card'),scene=$('scene');
-const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
-let base=0,rx=0,ry=0,tx=0,drag=null,hx=0,hy=0,dragY=0,dragX=0;
-function frame(){
- const targetY=base+dragY+hx, targetX=dragX+hy;
- const k=RM?1:.12; ry+=(targetY-ry)*k; rx+=(targetX-rx)*k;
- card.style.transform='rotateX('+rx.toFixed(2)+'deg) rotateY('+ry.toFixed(2)+'deg)';
- requestAnimationFrame(frame)}
-requestAnimationFrame(frame);
-function glare(e){const r=card.getBoundingClientRect();const px=(e.clientX-r.left)/r.width,py=(e.clientY-r.top)/r.height;
- // glare tracks pointer; mirrored on the back face because of its 180deg rotation
- card.querySelectorAll('.face').forEach(f=>{const back=f.classList.contains('back');f.style.setProperty('--gx',((back?1-px:px)*100)+'%');f.style.setProperty('--gy',(py*100)+'%')})}
-scene.addEventListener('pointermove',e=>{
- if(drag){dragY=(e.clientX-drag.x)*.45;dragX=Math.max(-35,Math.min(35,-(e.clientY-drag.y)*.25))}
- else if(e.pointerType==='mouse'){const r=scene.getBoundingClientRect();hx=((e.clientX-r.left)/r.width-.5)*14;hy=-((e.clientY-r.top)/r.height-.5)*10}
- glare(e)});
-scene.addEventListener('pointerleave',()=>{if(!drag){hx=0;hy=0}});
-scene.addEventListener('pointerdown',e=>{if(e.target.closest('.cbtn'))return;drag={x:e.clientX,y:e.clientY};card.classList.add('drag');hx=0;hy=0;try{scene.setPointerCapture(e.pointerId)}catch(_){}});
-function end(){if(!drag)return;drag=null;card.classList.remove('drag');
- const total=base+dragY;base=Math.round(total/180)*180;dragY=0;dragX=0}
-scene.addEventListener('pointerup',end);scene.addEventListener('pointercancel',end);
-$('flip').onclick=()=>{base+=180};
-$('reset').onclick=()=>{base=Math.round(base/360)*360;dragY=dragX=hx=hy=0;if(cur)closeP()};
+  // References
+  const cardRef = useRef(null);
+  const dragStartRef = useRef({ x: 0, y: 0, rotX: 0, rotY: 0 });
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
 
-/* background */
-const cv=$('bg'),cx=cv.getContext('2d');let W,H,st=[],pt=[];
-function size(){const d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;cv.width=W*d;cv.height=H*d;cx.setTransform(d,0,0,d,0,0);
- st=Array.from({length:Math.round(W*H/5500)},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.2,s:Math.random()*.15+.03,a:Math.random()}));
- pt=Array.from({length:26},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+1,vy:-(Math.random()*.2+.05),vx:(Math.random()-.5)*.1,g:Math.random()<.4}))}
-size();addEventListener('resize',size);
-function bgf(t){cx.clearRect(0,0,W,H);
- [[.2,.25,.4,'#075BFF18'],[.85,.8,.45,'#1677FF14']].forEach(o=>{const g=cx.createRadialGradient(W*o[0],H*o[1],0,W*o[0],H*o[1],Math.max(W,H)*o[2]);g.addColorStop(0,o[3]);g.addColorStop(1,'transparent');cx.fillStyle=g;cx.fillRect(0,0,W,H)});
- st.forEach(s=>{if(!RM){s.x-=s.s;if(s.x<0)s.x=W}cx.globalAlpha=.35+.65*Math.abs(Math.sin(t/1800+s.a*6));cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.3);cx.fill()});
- pt.forEach(p=>{if(!RM){p.x+=p.vx;p.y+=p.vy;if(p.y<-5){p.y=H+5;p.x=Math.random()*W}}cx.globalAlpha=.22;cx.fillStyle=p.g?'#E8C49B':'#4d97ff';cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.3);cx.fill()});
- cx.globalAlpha=1;if(!RM)requestAnimationFrame(bgf)}
-requestAnimationFrame(bgf);
-</script>
-</body>
-</html>
+  // Web Audio synth for refined user interaction sounds
+  const playSound = (type = 'click') => {
+    if (!soundEnabled) return;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      const now = ctx.currentTime;
+
+      if (type === 'flip') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'panel') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(660, now + 0.15);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'copy') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.setValueAtTime(659.25, now + 0.08);
+        osc.frequency.setValueAtTime(783.99, now + 0.16);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+    } catch (e) {
+      // Audio context fallbacks silently
+    }
+  };
+
+  // --- BACKGROUND COSMIC STARFIELD ANIMATION ---
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize);
+
+    // Generate static + pulsing stars
+    const starCount = 140;
+    const stars = Array.from({ length: starCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      radius: Math.random() * 1.5 + 0.2,
+      alpha: Math.random(),
+      speed: Math.random() * 0.01 + 0.003,
+      color: Math.random() > 0.3 ? '#ffffff' : Math.random() > 0.5 ? '#E8C49B' : '#70A1FF'
+    }));
+
+    // Floating glowing dust particles
+    const particleCount = 20;
+    const particles = Array.from({ length: particleCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 3 + 1,
+      alpha: Math.random() * 0.4 + 0.1
+    }));
+
+    const render = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Render stars
+      for (let s of stars) {
+        s.alpha += s.speed;
+        if (s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = Math.max(0.1, Math.min(1, s.alpha));
+        ctx.fill();
+      }
+
+      // Render drifting space dust
+      for (let p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
+        grad.addColorStop(0, 'rgba(22, 119, 255, 0.4)');
+        grad.addColorStop(1, 'rgba(7, 91, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = p.alpha;
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  // --- MOUSE & TOUCH DRAG CONTROLS FOR 3D ROTATION ---
+  const handlePointerDown = (e) => {
+    // Only drag if not interacting directly with explicit button actions
+    if (e.target.closest('button') || e.target.closest('.no-drag')) return;
+    
+    setIsDragging(true);
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    dragStartRef.current = {
+      x: clientX,
+      y: clientY,
+      rotX,
+      rotY
+    };
+  };
+
+  const handlePointerMove = (e) => {
+    // Mouse glare calculation when floating around container
+    if (cardRef.current) {
+      const rect = cardRef.current.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const xPercent = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 0), 100);
+      const yPercent = Math.min(Math.max(((clientY - rect.top) / rect.height) * 100, 0), 100);
+      setGlarePos({ x: xPercent, y: yPercent });
+    }
+
+    if (!isDragging) return;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    const deltaX = clientX - dragStartRef.current.x;
+    const deltaY = clientY - dragStartRef.current.y;
+
+    // Smooth subtle tilt sensitivity
+    const newRotY = dragStartRef.current.rotY + deltaX * 0.4;
+    const newRotX = dragStartRef.current.rotX - deltaY * 0.4;
+
+    // Clamp X rotation to prevent extreme awkward flips
+    setRotX(Math.min(Math.max(newRotX, -45), 45));
+    setRotY(newRotY);
+  };
+
+  const handlePointerUp = () => {
+    setIsDragging(false);
+  };
+
+  // Flip Action
+  const toggleFlip = () => {
+    playSound('flip');
+    setIsFlipped((prev) => !prev);
+  };
+
+  // Reset Viewport orientation
+  const resetView = () => {
+    playSound('click');
+    setRotX(-5);
+    setRotY(15);
+    setIsFlipped(false);
+  };
+
+  // Copy to Clipboard helper
+  const handleCopy = (key, text) => {
+    playSound('copy');
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    setTimeout(() => {
+      setCopiedKey(null);
+    }, 2400);
+  };
+
+  // Open modal side panel
+  const handleOpenPanel = (panelKey) => {
+    playSound('panel');
+    setActivePanel(panelKey);
+  };
+
+  // Total calculated rotation including flip
+  const currentTotalRotY = rotY + (isFlipped ? 180 : 0);
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative min-h-screen w-full bg-[#020617] text-white font-sans overflow-x-hidden overflow-y-auto flex flex-col justify-between select-none"
+      onMouseMove={handlePointerMove}
+      onTouchMove={handlePointerMove}
+      onMouseUp={handlePointerUp}
+      onTouchEnd={handlePointerUp}
+    >
+      {/* Dynamic Starfield Background Canvas */}
+      <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />
+
+      {/* Atmospheric Background Ambient Lights */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none z-0" />
+      <div className="absolute bottom-10 left-1/3 w-[450px] h-[450px] bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none z-0" />
+      <div className="absolute top-1/3 right-10 w-[350px] h-[350px] bg-[#E8C49B]/5 rounded-full blur-[100px] pointer-events-none z-0" />
+
+      {/* MAIN TOP HEADER / BRAND BAR */}
+      <header className="relative z-20 w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {/* Luxury Monogram Brand Emblem Header */}
+          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[#E8C49B] via-[#FCEAD6] to-[#B08D57] p-[1px] shadow-[0_0_15px_rgba(232,196,155,0.3)]">
+            <div className="w-full h-full bg-[#030B24] rounded-full flex items-center justify-center">
+              <span className="font-serif text-[#E8C49B] font-bold text-sm tracking-wider">K</span>
+            </div>
+          </div>
+          <div>
+            <h1 className="font-serif tracking-[0.25em] text-lg font-bold bg-gradient-to-r from-white via-[#E8C49B] to-white bg-clip-text text-transparent">
+              KAGUYA
+            </h1>
+            <p className="text-[10px] tracking-[0.3em] text-blue-300/60 uppercase">Luxury Digital Presence</p>
+          </div>
+        </div>
+
+        {/* Mute/Unmute & Quick Actions */}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className="p-2.5 rounded-full bg-white/5 border border-white/10 hover:border-[#E8C49B]/50 hover:bg-white/10 text-slate-300 hover:text-white transition-all backdrop-blur-md"
+            title={soundEnabled ? 'Disable Audio Effects' : 'Enable Audio Effects'}
+          >
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-[#E8C49B]" /> : <VolumeX className="w-4 h-4 opacity-50" />}
+          </button>
+
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({ title: 'KAGUYA Business Card', url: window.location.href });
+              } else {
+                handleCopy('page_url', window.location.href);
+              }
+            }}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-white/5 border border-white/10 hover:border-[#1677FF]/50 hover:bg-white/10 text-xs tracking-wider text-slate-200 transition-all backdrop-blur-md"
+          >
+            <Share2 className="w-3.5 h-3.5 text-[#1677FF]" />
+            <span className="hidden sm:inline">SHARE</span>
+          </button>
+        </div>
+      </header>
+
+      {/* CENTER WORKSPACE: 3D CARD INTERACTOR & SIDE PANEL WRAPPER */}
+      <main className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row items-center justify-center gap-8 min-h-[580px]">
+        
+        {/* 3D CARD CONTAINER */}
+        <div 
+          className="relative flex-1 flex flex-col items-center justify-center w-full max-w-2xl py-6"
+          style={{ perspective: '1200px' }}
+        >
+          {/* Instructions tooltip */}
+          <div className="mb-4 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-950/40 border border-blue-500/20 backdrop-blur-md text-xs text-blue-200/80 animate-pulse">
+            <Compass className="w-3.5 h-3.5 text-[#E8C49B]" />
+            <span>Drag to rotate 3D • Click controls below to flip</span>
+          </div>
+
+          {/* DYNAMIC SHADOW EFFECT UNDER CARD */}
+          <div
+            className="absolute bottom-6 w-[340px] sm:w-[480px] h-12 rounded-full bg-black/80 blur-xl pointer-events-none transition-transform duration-75"
+            style={{
+              transform: `translateY(40px) rotateX(80deg) rotateZ(${rotY * 0.1}deg) scale(${1 - Math.abs(rotX) * 0.005})`,
+              boxShadow: '0 20px 50px 10px rgba(7, 91, 255, 0.25)'
+            }}
+          />
+
+          {/* THE 3D CARD ITSELF */}
+          <div
+            ref={cardRef}
+            onMouseDown={handlePointerDown}
+            onTouchStart={handlePointerDown}
+            className={`relative w-[340px] sm:w-[500px] h-[520px] sm:h-[310px] rounded-2xl cursor-grab active:cursor-grabbing transition-transform ${
+              isDragging ? 'duration-75' : 'duration-700 ease-out'
+            }`}
+            style={{
+              transformStyle: 'preserve-3d',
+              transform: `rotateX(${rotX}deg) rotateY(${currentTotalRotY}deg)`
+            }}
+          >
+            {/* LIGHT GLARE & HOLOGRAPHIC REFLECTION OVERLAY */}
+            <div
+              className="absolute inset-0 rounded-2xl pointer-events-none z-30 transition-opacity duration-300 rounded-2xl overflow-hidden"
+              style={{
+                background: `radial-gradient(circle at ${glarePos.x}% ${glarePos.y}%, rgba(255, 255, 255, 0.25) 0%, rgba(232, 196, 155, 0.08) 35%, rgba(0,0,0,0) 70%)`,
+                mixBlendMode: 'overlay'
+              }}
+            />
+
+            {/* CARD BORDER LIGHTING & NEON GLOW */}
+            <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-tr from-[#075BFF] via-[#E8C49B]/40 to-[#1677FF] opacity-70 blur-[1px] pointer-events-none" />
+
+            {/* =================================================== */}
+            {/* FRONT SIDE OF THE KAGUYA BUSINESS CARD */}
+            {/* =================================================== */}
+            <div
+              className="absolute inset-0 w-full h-full rounded-2xl bg-gradient-to-br from-[#030B24] via-[#020617] to-[#071338] border border-[#1677FF]/30 p-6 sm:p-8 flex flex-col justify-between overflow-hidden shadow-2xl backdrop-blur-xl"
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(0deg)'
+              }}
+            >
+              {/* Background Art: Cosmic Waves & Constellations */}
+              <div className="absolute inset-0 pointer-events-none opacity-40">
+                {/* Neon Waves */}
+                <svg className="absolute -left-10 -bottom-10 w-[300px] h-[300px] text-blue-500/20" viewBox="0 0 200 200">
+                  <path fill="currentColor" d="M42.7,-62.9C53.7,-53.8,59.8,-38.5,64.2,-23.1C68.6,-7.7,71.3,7.8,66.4,21.7C61.5,35.6,49,47.9,35.3,55.4C21.7,62.9,6.8,65.6,-8.7,68C-24.2,70.4,-40.3,72.5,-52.4,64.7C-64.5,56.9,-72.6,39.2,-74.6,21.5C-76.6,3.8,-72.5,-13.9,-64.1,-28.7C-55.7,-43.5,-43,-55.4,-29.3,-62.7C-15.6,-70,-0.9,-72.7,13.6,-70.6C28.1,-68.5,31.7,-72,42.7,-62.9Z" transform="translate(100 100)" />
+                </svg>
+
+                {/* Starry Constellation Detail */}
+                <svg className="absolute top-4 right-4 w-40 h-40 opacity-30 text-[#E8C49B]" viewBox="0 0 100 100" fill="none" stroke="currentColor">
+                  <circle cx="20" cy="20" r="1.5" fill="currentColor" />
+                  <circle cx="70" cy="30" r="2" fill="currentColor" />
+                  <circle cx="85" cy="75" r="1.5" fill="currentColor" />
+                  <line x1="20" y1="20" x2="70" y2="30" strokeWidth="0.5" strokeDasharray="2 2" />
+                  <line x1="70" y1="30" x2="85" y2="75" strokeWidth="0.5" strokeDasharray="2 2" />
+                </svg>
+              </div>
+
+              {/* Front Side Top Bar */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#1677FF] 
