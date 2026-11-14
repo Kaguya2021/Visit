@@ -1,501 +1,329 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#050914">
+  <meta name="description" content="KAGUYA — Developer & Creator. Contact card.">
   <title>KAGUYA — Developer & Creator</title>
-  <!-- Tailwind CSS (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Vanilla-tilt.js (CDN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-  <!-- Font Awesome for icons (CDN) -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <!-- Google Fonts: Inter & Playfair Display for elegant monogram -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
   <style>
-    /* ---------- Global & Background ---------- */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      color-scheme: dark;
+      --gold: #e9c878;
+      --gold-bright: #fff0b6;
+      --blue: #42a5ff;
+      --white: #f4f7ff;
+      --muted: #9ba9c4;
+      --panel: rgba(10, 20, 43, .78);
     }
-
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
     body {
-      min-height: 100vh;
-      background: radial-gradient(circle at 30% 20%, #0a1128, #02030a);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Inter', sans-serif;
+      margin: 0;
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
       overflow: hidden;
-      position: relative;
-      touch-action: none; /* for better gyro/touch control */
+      padding: 24px;
+      color: var(--white);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 50% 45%, rgba(17, 62, 122, .28), transparent 48%),
+        radial-gradient(ellipse at 15% 15%, rgba(19, 65, 130, .18), transparent 35%),
+        linear-gradient(145deg, #030711 0%, #071329 48%, #02050d 100%);
     }
-
-    /* Canvas for stars/particles + waves (full screen) */
-    #bg-canvas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-      pointer-events: none;
+    .scene {
+      position: fixed; inset: 0; overflow: hidden; pointer-events: none;
+      perspective: 1000px;
     }
-
-    /* Card container (centers card, provides perspective) */
-    .card-container {
+    .scene::before, .scene::after {
+      content: ""; position: absolute; width: 75vw; height: 75vw; max-width: 900px; max-height: 900px;
+      border: 1px solid rgba(59, 153, 255, .12); border-radius: 50%;
+      left: 50%; top: 50%; transform: translate(-50%, -50%) rotateX(72deg);
+      box-shadow: 0 0 70px rgba(29, 123, 255, .08), inset 0 0 70px rgba(29, 123, 255, .05);
+      animation: wave 13s ease-in-out infinite alternate;
+    }
+    .scene::after {
+      width: 105vw; height: 105vw; border-color: rgba(73, 155, 255, .07);
+      animation-duration: 19s; animation-direction: alternate-reverse;
+    }
+    @keyframes wave {
+      from { transform: translate(-50%, -50%) rotateX(72deg) scale(.92); opacity: .45; }
+      to { transform: translate(-50%, -50%) rotateX(72deg) scale(1.08); opacity: 1; }
+    }
+    #stars { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .glow {
+      position: absolute; width: 420px; height: 420px; border-radius: 50%;
+      background: rgba(0, 112, 255, .12); filter: blur(100px);
+      left: 50%; top: 50%; transform: translate(-50%, -50%);
+    }
+    .card-wrap {
+      width: min(100%, 390px);
       perspective: 1200px;
-      width: 100%;
-      max-width: 420px;
-      padding: 1.5rem;
-      z-index: 10;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: auto;
+      z-index: 1;
     }
-
-    /* ---------- 3D Card ---------- */
     .card {
+      --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 50%;
       position: relative;
       width: 100%;
-      background: rgba(8, 15, 35, 0.65);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border-radius: 2.5rem;
-      padding: 2.2rem 1.8rem 1.8rem;
-      box-shadow: 0 25px 50px -8px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(212, 175, 55, 0.25), 0 0 30px rgba(0, 180, 255, 0.15);
-      border: 1px solid rgba(212, 175, 55, 0.3);
-      transform-style: preserve-3d;
-      transition: box-shadow 0.3s ease, border-color 0.3s ease;
-      will-change: transform;
-      /* initial transform set by JS */
-    }
-
-    .card:hover {
-      border-color: rgba(212, 175, 55, 0.7);
-      box-shadow: 0 30px 60px -8px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(212, 175, 55, 0.5), 0 0 50px rgba(0, 180, 255, 0.3);
-    }
-
-    /* Metallic / gold text */
-    .gold-text {
-      background: linear-gradient(135deg, #f9e7b3 0%, #d4af37 40%, #b8860b 70%, #f9e7b3 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-      letter-spacing: 2px;
-    }
-
-    /* Monogram K */
-    .monogram {
-      font-family: 'Playfair Display', serif;
-      font-weight: 700;
-      font-size: 3.8rem;
-      line-height: 1;
-      display: inline-block;
-      background: linear-gradient(135deg, #fceabb 0%, #d4af37 40%, #b8860b 70%, #fceabb 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.7));
-      transform: translateZ(25px);
-      transition: transform 0.2s ease;
-    }
-
-    /* Orbit ring around K */
-    .orbit-ring {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 5.5rem;
-      height: 5.5rem;
-      transform: translate(-50%, -50%) rotateX(70deg) rotateZ(10deg);
-      border-radius: 50%;
-      border: 1.5px solid rgba(212, 175, 55, 0.6);
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.4), inset 0 0 15px rgba(212, 175, 55, 0.2);
-      pointer-events: none;
-      animation: orbitSpin 8s linear infinite;
-    }
-
-    @keyframes orbitSpin {
-      0% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(0deg); }
-      100% { transform: translate(-50%, -50%) rotateX(70deg) rotateZ(360deg); }
-    }
-
-    /* Buttons */
-    .social-btn {
+      min-height: 570px;
+      padding: 42px 34px 27px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      border-radius: 2rem;
-      background: rgba(10, 20, 45, 0.7);
-      border: 1px solid rgba(212, 175, 55, 0.35);
-      color: #fff;
-      font-weight: 500;
-      font-size: 0.95rem;
-      letter-spacing: 0.5px;
-      transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-      text-decoration: none;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 rgba(0, 180, 255, 0);
-      transform: translateZ(10px);
-      position: relative;
+      border: 1px solid rgba(233, 200, 120, .48);
+      border-radius: 28px;
       overflow: hidden;
-    }
-
-    .social-btn i {
-      font-size: 1.3rem;
-      color: #d4af37;
-      transition: transform 0.2s ease, color 0.2s ease;
-    }
-
-    .social-btn:hover {
-      background: rgba(20, 35, 70, 0.9);
-      border-color: #d4af37;
-      box-shadow: 0 0 22px rgba(0, 180, 255, 0.5), 0 0 12px rgba(212, 175, 55, 0.4), 0 8px 20px rgba(0, 0, 0, 0.6);
-      transform: translateZ(25px) scale(1.02);
-      color: #f9e7b3;
-    }
-
-    .social-btn:hover i {
-      color: #f9e7b3;
-      transform: scale(1.15);
-    }
-
-    /* ripple/click effect */
-    .social-btn:active {
-      transform: translateZ(15px) scale(0.98);
-    }
-
-    /* Footer line */
-    .footer-line {
-      width: 60%;
-      height: 1px;
-      margin: 0 auto 0.8rem;
-      background: linear-gradient(90deg, transparent, #d4af37, #f9e7b3, #d4af37, transparent);
-      opacity: 0.7;
-      transform: translateZ(5px);
-    }
-
-    /* Text styles */
-    .title-gold {
-      font-size: 2rem;
-      font-weight: 700;
-      letter-spacing: 6px;
-      margin-top: 0.5rem;
-      margin-bottom: 0.1rem;
-      background: linear-gradient(135deg, #fceabb 0%, #d4af37 40%, #b8860b 70%, #fceabb 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-      text-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
-      transform: translateZ(20px);
-    }
-
-    .subtitle {
-      font-size: 0.9rem;
-      letter-spacing: 3px;
-      color: #ffffffcc;
-      font-weight: 300;
-      text-transform: uppercase;
-      transform: translateZ(15px);
-    }
-
-    /* small adjustments for mobile */
-    @media (max-width: 480px) {
-      .card { padding: 1.8rem 1.2rem 1.4rem; }
-      .title-gold { font-size: 1.7rem; letter-spacing: 4px; }
-      .monogram { font-size: 3rem; }
-      .orbit-ring { width: 4.5rem; height: 4.5rem; }
-      .social-btn { padding: 0.7rem 0.8rem; font-size: 0.85rem; }
-      .social-btn i { font-size: 1.1rem; }
-    }
-
-    /* Make card content 3D layers */
-    .card-content {
+      isolation: isolate;
+      background:
+        linear-gradient(145deg, rgba(18, 37, 72, .92), rgba(5, 12, 28, .96) 58%, rgba(8, 23, 47, .94));
+      box-shadow: 0 35px 90px rgba(0, 0, 0, .55), 0 0 55px rgba(31, 122, 235, .13),
+        inset 0 1px 0 rgba(255,255,255,.09);
+      transform: rotateX(var(--rx)) rotateY(var(--ry));
       transform-style: preserve-3d;
+      transition: transform .18s ease-out, box-shadow .35s ease;
+      will-change: transform;
+    }
+    .card::before {
+      content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+      background: radial-gradient(circle at var(--mx) var(--my), rgba(92, 174, 255, .19), transparent 38%);
+    }
+    .card::after {
+      content: ""; position: absolute; inset: 10px; border: 1px solid rgba(255,255,255,.055);
+      border-radius: 20px; pointer-events: none;
+    }
+    .top-line {
+      position: absolute; top: 0; left: 15%; right: 15%; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      box-shadow: 0 0 14px rgba(233, 200, 120, .55);
+    }
+    .brand { display: flex; flex-direction: column; align-items: center; transform: translateZ(38px); }
+    .monogram {
+      width: 112px; height: 112px; display: grid; place-items: center; position: relative;
+      margin-bottom: 19px;
+    }
+    .monogram::before, .monogram::after {
+      content: ""; position: absolute; inset: 8px; border: 1px solid rgba(233, 200, 120, .7);
+      border-radius: 50%; transform: rotate(-28deg) scaleX(1.28);
+      box-shadow: 0 0 18px rgba(233, 200, 120, .14);
+    }
+    .monogram::after {
+      inset: 1px 14px; transform: rotate(55deg) scaleX(1.15);
+      border-color: rgba(67, 160, 255, .55);
+    }
+    .monogram span {
+      font-family: Georgia, "Times New Roman", serif; font-size: 72px; line-height: 1;
+      font-weight: 400; color: transparent;
+      background: linear-gradient(135deg, #fff4c9 12%, #d5a94e 48%, #fff0b6 75%, #a87928);
+      background-clip: text; -webkit-background-clip: text;
+      filter: drop-shadow(0 0 12px rgba(233, 200, 120, .3));
+    }
+    h1 {
+      margin: 0; font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px; font-weight: 500; letter-spacing: .22em; padding-left: .22em;
+      color: var(--gold-bright); text-shadow: 0 0 20px rgba(233, 200, 120, .22);
+    }
+    .subtitle {
+      margin: 9px 0 0; color: #aebbd2; font-size: 11px; letter-spacing: .28em;
+      text-transform: uppercase;
+    }
+    .separator {
+      width: 100%; display: flex; align-items: center; gap: 12px; margin: 34px 0 23px;
+      color: var(--gold); opacity: .75;
+    }
+    .separator::before, .separator::after {
+      content: ""; height: 1px; flex: 1;
+      background: linear-gradient(90deg, transparent, rgba(233,200,120,.6));
+    }
+    .separator::after { transform: scaleX(-1); }
+    .separator span { font-size: 9px; letter-spacing: .3em; text-transform: uppercase; }
+    .links { width: 100%; display: grid; gap: 12px; transform: translateZ(25px); }
+    .contact {
+      min-height: 52px; display: flex; align-items: center; gap: 14px;
+      padding: 0 17px; border: 1px solid rgba(126, 164, 218, .2); border-radius: 13px;
+      background: linear-gradient(100deg, rgba(17, 38, 72, .76), rgba(10, 22, 44, .58));
+      color: #eaf2ff; text-decoration: none; font-size: 13px; letter-spacing: .045em;
+      transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease, background .25s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .contact:hover, .contact:focus-visible {
+      outline: none; transform: translateY(-3px) translateZ(8px);
+      border-color: rgba(75, 170, 255, .85);
+      background: linear-gradient(100deg, rgba(21, 57, 103, .92), rgba(10, 29, 57, .8));
+      box-shadow: 0 8px 26px rgba(0, 119, 255, .17), inset 0 0 18px rgba(49, 145, 255, .07);
+    }
+    .contact svg { width: 19px; height: 19px; flex: 0 0 19px; color: var(--gold); }
+    .contact .arrow { margin-left: auto; color: #7d9abd; font-size: 17px; }
+    footer {
+      width: 100%; margin-top: auto; padding-top: 25px; text-align: center;
+      color: #8392ac; font-size: 9px; letter-spacing: .25em;
+    }
+    footer::before {
+      content: ""; display: block; height: 1px; width: 100%; margin-bottom: 18px;
+      background: linear-gradient(90deg, transparent, rgba(233,200,120,.55), transparent);
+    }
+    .hint {
+      position: fixed; bottom: 18px; left: 0; right: 0; z-index: 2; text-align: center;
+      color: rgba(169, 190, 220, .48); font-size: 10px; letter-spacing: .16em;
+      text-transform: uppercase; pointer-events: none;
+    }
+    @media (max-width: 480px) {
+      body { padding: 18px; }
+      .card { min-height: 548px; padding: 35px 25px 24px; }
+      .monogram { width: 100px; height: 100px; }
+      .monogram span { font-size: 64px; }
+      h1 { font-size: 30px; }
+      .separator { margin: 29px 0 20px; }
+      .contact { min-height: 50px; }
+      .hint { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
-
-  <!-- Background canvas for particles and waves -->
-  <canvas id="bg-canvas"></canvas>
-
-  <!-- Main 3D card container -->
-  <div class="card-container">
-    <div class="card" id="tilt-card">
-      <div class="card-content flex flex-col items-center text-center">
-        <!-- Monogram area -->
-        <div class="relative flex items-center justify-center w-24 h-24 mb-2" style="transform: translateZ(30px);">
-          <div class="orbit-ring"></div>
-          <span class="monogram">K</span>
-        </div>
-
-        <!-- Title & Subtitle -->
-        <h1 class="title-gold">KAGUYA</h1>
-        <p class="subtitle">Developer &amp; Creator</p>
-
-        <!-- Spacer -->
-        <div class="h-6"></div>
-
-        <!-- Buttons (grid 2 columns) -->
-        <div class="grid grid-cols-2 gap-3 w-full mt-1">
-          <!-- WhatsApp -->
-          <a href="https://wa.me/996700214091" target="_blank" rel="noopener" class="social-btn" id="btn-wa">
-            <i class="fab fa-whatsapp"></i>
-            <span>WhatsApp</span>
-          </a>
-          <!-- Gmail -->
-          <a href="mailto:a1dana.bakdiraeva@gmail.com" class="social-btn" id="btn-gmail">
-            <i class="fas fa-envelope"></i>
-            <span>Gmail</span>
-          </a>
-          <!-- Telegram Personal -->
-          <a href="https://t.me/kaguya2_0" target="_blank" rel="noopener" class="social-btn" id="btn-tg">
-            <i class="fab fa-telegram-plane"></i>
-            <span>Telegram</span>
-          </a>
-          <!-- Telegram Channel -->
-          <a href="https://t.me/kaguya_2_0_bots" target="_blank" rel="noopener" class="social-btn" id="btn-tg-channel">
-            <i class="fab fa-telegram"></i>
-            <span>Channel</span>
-          </a>
-        </div>
-
-        <!-- Footer -->
-        <div class="w-full mt-5">
-          <div class="footer-line"></div>
-          <p class="text-xs text-white/60 tracking-wider" style="transform: translateZ(8px);">© 2026 KAGUYA</p>
-        </div>
-      </div>
-    </div>
+  <div class="scene" aria-hidden="true">
+    <div class="glow"></div>
+    <canvas id="stars"></canvas>
   </div>
 
-  <!-- Initialize Vanilla-Tilt on the card + additional custom effects -->
+  <main class="card-wrap">
+    <section class="card" id="card" aria-label="KAGUYA contact card">
+      <div class="top-line"></div>
+      <div class="brand">
+        <div class="monogram" aria-hidden="true"><span>K</span></div>
+        <h1>KAGUYA</h1>
+        <p class="subtitle">Developer &amp; Creator</p>
+      </div>
+
+      <div class="separator"><span>Get in touch</span></div>
+
+      <nav class="links" aria-label="Contact links">
+        <a class="contact" href="https://wa.me/996700214091" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 11.8a8.4 8.4 0 0 1-12.5 7.3L3 20l.9-4.7a8.4 8.4 0 1 1 16.5-3.5Z"/><path d="M8.4 8.2c.2-.5.5-.5.8-.5h.5c.2 0 .4.1.5.4l.7 1.6c.1.3.1.5-.1.7l-.5.6c-.2.2-.2.4 0 .7.6 1 1.4 1.7 2.4 2.2.3.1.5.1.7-.1l.7-.8c.2-.2.4-.3.7-.2l1.5.7c.3.1.4.3.4.5 0 .4-.2 1.1-.6 1.4-.4.4-1 .6-1.6.5-1-.1-2.3-.7-3.7-1.9-1.2-1-2.1-2.4-2.4-3.4-.3-.9 0-1.7.4-2.4Z"/></svg>
+          <span>WhatsApp</span><span class="arrow">↗</span>
+        </a>
+        <a class="contact" href="mailto:a1dana.bakdiraeva@gmail.com">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg>
+          <span>Gmail</span><span class="arrow">↗</span>
+        </a>
+        <a class="contact" href="https://t.me/kaguya2_0" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 3-7.2 18-3.9-8.1L2 9.2 21 3Z"/><path d="M9.9 12.9 21 3"/></svg>
+          <span>Telegram</span><span class="arrow">↗</span>
+        </a>
+        <a class="contact" href="https://t.me/kaguya_2_0_bots" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m7 12 3.2 3.2L17.5 8"/></svg>
+          <span>Channel</span><span class="arrow">↗</span>
+        </a>
+      </nav>
+
+      <footer>© 2026 KAGUYA</footer>
+    </section>
+  </main>
+  <div class="hint" aria-hidden="true">Move your cursor to explore</div>
+
   <script>
-    (function() {
-      // --- Vanilla-Tilt initialization ---
-      const card = document.getElementById('tilt-card');
-      if (card) {
-        VanillaTilt.init(card, {
-          max: 18,
-          speed: 400,
-          glare: true,
-          "max-glare": 0.35,
-          scale: 1.02,
-          gyroscope: true,       // enable gyroscope on mobile
-          gyroscopeMinAngleX: -30,
-          gyroscopeMaxAngleX: 30,
-          gyroscopeMinAngleY: -30,
-          gyroscopeMaxAngleY: 30,
-          perspective: 1200,
-          transition: true,
-          easing: "cubic-bezier(.25,.46,.45,.94)",
-        });
+    (() => {
+      const card = document.getElementById('card');
+      const wrap = document.querySelector('.card-wrap');
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let frame = 0;
+
+      function setTilt(x, y, rect) {
+        const px = (x - rect.left) / rect.width;
+        const py = (y - rect.top) / rect.height;
+        const rotateY = (px - 0.5) * 18;
+        const rotateX = (0.5 - py) * 18;
+        card.style.setProperty('--rx', rotateX.toFixed(2) + 'deg');
+        card.style.setProperty('--ry', rotateY.toFixed(2) + 'deg');
+        card.style.setProperty('--mx', (px * 100).toFixed(1) + '%');
+        card.style.setProperty('--my', (py * 100).toFixed(1) + '%');
+      }
+      function resetTilt() {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+        card.style.setProperty('--mx', '50%');
+        card.style.setProperty('--my', '50%');
       }
 
-      // --- Add subtle click sound / tactile feedback (optional) ---
-      // We'll use AudioContext for a tiny 'blip' on button click (no external files)
-      function playClickSound() {
-        try {
-          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-          }
-          const osc = audioCtx.createOscillator();
-          const gain = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-          osc.frequency.exponentialRampToValueAtTime(500, audioCtx.currentTime + 0.08);
-          gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.12);
-          osc.connect(gain);
-          gain.connect(audioCtx.destination);
-          osc.start();
-          osc.stop(audioCtx.currentTime + 0.12);
-        } catch (e) {
-          // audio may be blocked; ignore
+      if (!reduceMotion) {
+        wrap.addEventListener('pointermove', (event) => {
+          if (event.pointerType === 'touch') return;
+          cancelAnimationFrame(frame);
+          frame = requestAnimationFrame(() => setTilt(event.clientX, event.clientY, card.getBoundingClientRect()));
+        });
+        wrap.addEventListener('pointerleave', resetTilt);
+
+        // Touch drag gives mobile users a direct tilt interaction.
+        let touchActive = false;
+        wrap.addEventListener('touchstart', () => { touchActive = true; }, { passive: true });
+        wrap.addEventListener('touchmove', (event) => {
+          if (!touchActive || !event.touches.length) return;
+          const t = event.touches[0];
+          setTilt(t.clientX, t.clientY, card.getBoundingClientRect());
+        }, { passive: true });
+        wrap.addEventListener('touchend', () => { touchActive = false; resetTilt(); }, { passive: true });
+
+        // Device orientation is used only when the browser grants permission.
+        const enableOrientation = () => {
+          if (!('DeviceOrientationEvent' in window)) return;
+          const handle = (event) => {
+            if (event.beta == null || event.gamma == null) return;
+            const rx = Math.max(-10, Math.min(10, (event.beta - 45) * .22));
+            const ry = Math.max(-10, Math.min(10, event.gamma * .22));
+            card.style.setProperty('--rx', rx.toFixed(2) + 'deg');
+            card.style.setProperty('--ry', ry.toFixed(2) + 'deg');
+          };
+          window.addEventListener('deviceorientation', handle, { passive: true });
+        };
+        if (typeof DeviceOrientationEvent !== 'undefined' &&
+            typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // iOS requires a user gesture; tilt interaction remains available by touch.
+          document.addEventListener('click', function askOrientation() {
+            DeviceOrientationEvent.requestPermission().then(result => {
+              if (result === 'granted') enableOrientation();
+            }).catch(() => {});
+            document.removeEventListener('click', askOrientation);
+          }, { once: true });
+        } else {
+          enableOrientation();
         }
       }
 
-      // Attach click sound to all social buttons
-      document.querySelectorAll('.social-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          playClickSound();
-          // Also provide small haptic feedback if available
-          if (navigator.vibrate) navigator.vibrate(15);
-        });
-      });
-
-      // --- Background animation: particles + light waves ---
-      const canvas = document.getElementById('bg-canvas');
+      // Small ambient star field, drawn locally with canvas (no external assets).
+      const canvas = document.getElementById('stars');
       const ctx = canvas.getContext('2d');
-      let width, height;
-      let particles = [];
-      let waves = [];
-
-      function initCanvas() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
-
-        // Create particles (stars / sparks)
-        const particleCount = Math.min(160, Math.floor(width * height / 12000));
-        particles = [];
-        for (let i = 0; i < particleCount; i++) {
-          particles.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            radius: Math.random() * 1.6 + 0.4,
-            baseAlpha: Math.random() * 0.6 + 0.2,
-            speedX: (Math.random() - 0.5) * 0.15,
-            speedY: (Math.random() - 0.5) * 0.15,
-            pulseSpeed: Math.random() * 0.01 + 0.005,
-            pulsePhase: Math.random() * Math.PI * 2,
-            color: Math.random() > 0.7 ? '#d4af37' : (Math.random() > 0.5 ? '#7ec8e3' : '#a0c4ff')
-          });
-        }
-
-        // Create a few subtle blue light waves (large blurred circles)
-        waves = [];
-        const waveCount = 4;
-        for (let i = 0; i < waveCount; i++) {
-          waves.push({
-            x: width * (0.2 + Math.random() * 0.6),
-            y: height * (0.2 + Math.random() * 0.6),
-            radius: Math.random() * 300 + 200,
-            speed: 0.0005 + Math.random() * 0.001,
-            phase: Math.random() * Math.PI * 2,
-            alpha: 0.03 + Math.random() * 0.05
-          });
-        }
+      let stars = [];
+      function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(innerWidth * dpr);
+        canvas.height = Math.floor(innerHeight * dpr);
+        canvas.style.width = innerWidth + 'px';
+        canvas.style.height = innerHeight + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        stars = Array.from({ length: Math.min(100, Math.floor(innerWidth * innerHeight / 11000)) }, () => ({
+          x: Math.random() * innerWidth, y: Math.random() * innerHeight,
+          r: Math.random() * 1.35 + .25, a: Math.random() * .55 + .12,
+          speed: Math.random() * .18 + .035, phase: Math.random() * Math.PI * 2
+        }));
       }
-
-      function drawBackground() {
-        if (!ctx) return;
-        ctx.clearRect(0, 0, width, height);
-
-        // Deep gradient base (redundant but ensures consistency)
-        const gradient = ctx.createRadialGradient(width*0.3, height*0.2, 0, width*0.5, height*0.5, Math.max(width, height));
-        gradient.addColorStop(0, '#0a1128');
-        gradient.addColorStop(1, '#02030a');
-        ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw light waves (blurred neon blue circles)
-        waves.forEach(w => {
-          w.phase += w.speed * 0.5;
-          const r = w.radius + Math.sin(w.phase) * 30;
-          const grad = ctx.createRadialGradient(w.x, w.y, 0, w.x, w.y, r);
-          grad.addColorStop(0, `rgba(0, 180, 255, ${w.alpha * 1.5})`);
-          grad.addColorStop(0.6, `rgba(0, 100, 255, ${w.alpha * 0.6})`);
-          grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = grad;
+      let tick = 0;
+      function draw() {
+        ctx.clearRect(0, 0, innerWidth, innerHeight);
+        tick += .012;
+        for (const s of stars) {
+          const alpha = s.a * (.65 + .35 * Math.sin(tick * s.speed * 12 + s.phase));
           ctx.beginPath();
-          ctx.arc(w.x, w.y, r, 0, Math.PI * 2);
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(177, 211, 255, ${alpha})`;
           ctx.fill();
-        });
-
-        // Draw particles with twinkle
-        const time = Date.now() * 0.001;
-        particles.forEach(p => {
-          // Update position (slow drift)
-          p.x += p.speedX;
-          p.y += p.speedY;
-
-          // Wrap around edges
-          if (p.x < 0) p.x = width;
-          if (p.x > width) p.x = 0;
-          if (p.y < 0) p.y = height;
-          if (p.y > height) p.y = 0;
-
-          // Twinkle alpha
-          const pulse = Math.sin(time * p.pulseSpeed * 10 + p.pulsePhase) * 0.4 + 0.6;
-          const alpha = p.baseAlpha * pulse;
-
-          // Glow effect: shadow blur
-          ctx.shadowColor = p.color;
-          ctx.shadowBlur = 12;
-          ctx.fillStyle = p.color;
-          ctx.globalAlpha = alpha;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fill();
-        });
-
-        // Reset shadow and alpha
-        ctx.shadowBlur = 0;
-        ctx.globalAlpha = 1;
-
-        requestAnimationFrame(drawBackground);
-      }
-
-      // --- Handle resizing ---
-      window.addEventListener('resize', () => {
-        initCanvas();
-      });
-
-      // --- Start everything ---
-      initCanvas();
-      drawBackground();
-
-      // --- Prevent context menu on long press (mobile) to avoid interference ---
-      document.querySelectorAll('.social-btn').forEach(btn => {
-        btn.addEventListener('contextmenu', (e) => e.preventDefault());
-      });
-
-      // --- Fallback for devices without gyroscope/touch: ensure tilt works on mouse leave ---
-      // Vanilla-tilt handles reset automatically, but we add small helper: 
-      // when mouse leaves the card, it resets via Vanilla-Tilt internal logic.
-      // However, if VanillaTilt fails to load, we could implement fallback, but it's loaded via CDN.
-
-      // Check if VanillaTilt is available; if not, implement a simple fallback (just in case)
-      if (typeof VanillaTilt === 'undefined') {
-        console.warn('VanillaTilt not loaded, applying fallback tilt.');
-        // Simple manual tilt implementation
-        const cardEl = document.getElementById('tilt-card');
-        const container = document.querySelector('.card-container');
-        if (cardEl && container) {
-          let isHovering = false;
-          container.addEventListener('mousemove', (e) => {
-            isHovering = true;
-            const rect = cardEl.getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            const centerY = rect.top + rect.height / 2;
-            const mouseX = e.clientX;
-            const mouseY = e.clientY;
-            const rotateY = ((mouseX - centerX) / (rect.width / 2)) * 15;
-            const rotateX = ((centerY - mouseY) / (rect.height / 2)) * 15;
-            cardEl.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.02)`;
-          });
-          container.addEventListener('mouseleave', () => {
-            isHovering = false;
-            cardEl.style.transform = `perspective(1200px) rotateX(0deg) rotateY(0deg) scale(1)`;
-          });
-          // Touch support fallback
-          container.addEventListener('touchmove', (e) => {
-            if (e.touches.length === 1) {
-              const touch = e.touches[0];
-              const rect = cardEl.getBoundingClientRect();
-              const centerX = rect.left + rect.width / 2;
-              const centerY = rect.top + rect.height / 2;
-              const rotateY = ((touch.clientX - centerX) / (rect.width / 2)) * 12;
-              const rotateX = ((centerY - touch.clientY) / (rect.height / 2)) * 12;
-              cardEl.style.transform = `perspective(1200px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.01)`;
-            }
-          }, { passive: true });
-          container.addEventListener('touchend', () => {
-            cardEl.style.transform = `perspective(1200px) rotateX(0deg) rotateY(0deg) scale(1)`;
-          });
         }
+        if (!reduceMotion) requestAnimationFrame(draw);
       }
+      resize();
+      draw();
+      window.addEventListener('resize', resize, { passive: true });
     })();
   </script>
 </body>
